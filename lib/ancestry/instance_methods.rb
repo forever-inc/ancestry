@@ -96,7 +96,7 @@ module Ancestry
     end
 
     def update_parent_counter_cache
-      if ancestry_was = send("#{self.ancestry_base_class.ancestry_column.to_s}_was")
+      if ancestry_was = send("#{self.ancestry_base_class.ancestry_column.to_s}_before_last_save")
         parent_id_was = ancestry_was.to_s.split('/').map(&:to_i).last
         self.class.decrement_counter _counter_cache_column, parent_id_was
       end
@@ -122,7 +122,9 @@ module Ancestry
     alias :has_parent? :ancestors?
 
     def ancestry_changed?
-      changed.include?(self.ancestry_base_class.ancestry_column.to_s)
+      # saved_changes.keys.include?(self.ancestry_base_class.ancestry_column.to_s)
+      self.send("will_save_change_to_#{self.ancestry_base_class.ancestry_column.to_s}?") ||
+      self.send("saved_change_to_#{self.ancestry_base_class.ancestry_column.to_s}?")
     end
 
     def ancestor_ids
